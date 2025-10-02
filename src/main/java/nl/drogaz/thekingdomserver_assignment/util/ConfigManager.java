@@ -2,12 +2,16 @@ package nl.drogaz.thekingdomserver_assignment.util;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.model.user.User;
+import net.luckperms.api.node.Node;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -71,4 +75,33 @@ public class ConfigManager {
         }
         return null; // kingdom not found
     }
+
+    public String getPlayerKingdom(UUID uuid) {
+        User user = LuckPermsProvider.get().getUserManager().getUser(uuid);
+        if (user != null) {
+            for (Node node : user.getNodes()) {
+                String perm = node.getKey();
+                if (perm.startsWith("kingdom.")) {
+                    String kingdom = perm.replace("kingdom.", "");
+                    return kingdom;
+                }
+            }
+        }
+        return null;
+    }
+
+    public List<Map<String, String>> getAllKingdoms() {
+        List<Map<?, ?>> kingdoms = kingdomsConfig.getMapList("kingdoms");
+        List<Map<String, String>> result = new ArrayList<>();
+
+        for (Map<?, ?> kingdom : kingdoms) {
+            result.add(Map.of(
+                    "name", kingdom.get("name").toString(),
+                    "color", kingdom.get("color").toString()
+            ));
+        }
+
+        return result;
+    }
+
 }

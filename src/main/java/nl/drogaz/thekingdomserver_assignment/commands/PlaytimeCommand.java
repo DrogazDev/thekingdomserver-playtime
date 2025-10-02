@@ -27,7 +27,7 @@ public class PlaytimeCommand implements BasicCommand {
 
         if (args.length == 0) {
             try {
-                String kingdom = "eo";
+                String kingdom = plugin.getConfigManager().getPlayerKingdom(player.getUniqueId());
                 String color = plugin.getConfigManager().getKingdom(kingdom).get("color");
                 String kingdomName = plugin.getConfigManager().getKingdom(kingdom).get("name");
                 String displayName = kingdomName.substring(0, 1).toUpperCase() + kingdomName.substring(1);

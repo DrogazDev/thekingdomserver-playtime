@@ -2,9 +2,13 @@ package nl.drogaz.thekingdomserver_assignment;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.luckperms.api.LuckPerms;
 import nl.drogaz.thekingdomserver_assignment.commands.PlaytimeCommand;
+import nl.drogaz.thekingdomserver_assignment.commands.setKingdomCommand;
 import nl.drogaz.thekingdomserver_assignment.listeners.PlaytimeListener;
 import nl.drogaz.thekingdomserver_assignment.util.ConfigManager;
+import org.bukkit.Bukkit;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class Main extends JavaPlugin {
@@ -26,6 +30,12 @@ public final class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(playtimeListener, this);
 
         registerCommand("playtime", new PlaytimeCommand());
+        registerCommand("setkingdom", new setKingdomCommand());
+
+        RegisteredServiceProvider<LuckPerms> provider = Bukkit.getServicesManager().getRegistration(LuckPerms.class);
+        if (provider != null) {
+            LuckPerms api = provider.getProvider();
+        }
     }
 
     @Override
