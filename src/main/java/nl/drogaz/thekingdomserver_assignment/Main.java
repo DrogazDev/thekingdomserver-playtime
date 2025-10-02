@@ -3,6 +3,7 @@ package nl.drogaz.thekingdomserver_assignment;
 import lombok.Getter;
 import lombok.Setter;
 import nl.drogaz.thekingdomserver_assignment.commands.PlaytimeCommand;
+import nl.drogaz.thekingdomserver_assignment.listeners.PlaytimeListener;
 import nl.drogaz.thekingdomserver_assignment.util.ConfigManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -12,11 +13,17 @@ public final class Main extends JavaPlugin {
     @Setter
     private ConfigManager configManager;
 
+    @Getter
+    private PlaytimeListener playtimeListener;
+
     @Override
     public void onEnable() {
 
         configManager = new ConfigManager(this);
         configManager.setup();
+
+        playtimeListener = new PlaytimeListener();
+        getServer().getPluginManager().registerEvents(playtimeListener, this);
 
         registerCommand("playtime", new PlaytimeCommand());
     }
@@ -26,7 +33,4 @@ public final class Main extends JavaPlugin {
         configManager.saveKingdoms();
     }
 
-    public ConfigManager getConfigManager() {
-        return configManager;
-    }
 }
