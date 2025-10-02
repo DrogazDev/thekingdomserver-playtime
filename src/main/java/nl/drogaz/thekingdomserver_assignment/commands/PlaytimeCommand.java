@@ -6,16 +6,44 @@ import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import nl.drogaz.thekingdomserver_assignment.Main;
+import nl.drogaz.thekingdomserver_assignment.util.ConfigManager;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+
+import java.util.Collection;
 
 public class PlaytimeCommand implements BasicCommand {
+
+    Main plugin = Main.getPlugin(Main.class);
 
     @Override
     public void execute(CommandSourceStack source, String[] args) {
         final Component name = source.getExecutor() != null ? source.getExecutor().name() : source.getSender().name();
 
         if (args.length == 0) {
-            source.getSender().sendMessage(MiniMessage.miniMessage().deserialize(""));
+            try {
+                String kingdom = "eo";
+                String color = plugin.getConfigManager().getKingdom(kingdom).get("color");
+                String kingdomName = plugin.getConfigManager().getKingdom(kingdom).get("name");
+                String displayName = kingdomName.substring(0, 1).toUpperCase() + kingdomName.substring(1);
+
+                source.getSender().sendRichMessage("<dark_gray><st>+----------------***----------------+</st></dark_gray>");
+                source.getSender().sendRichMessage("");
+                source.getSender().sendRichMessage("<gold>Je playtime is <yellow>%playtime%</yellow></gold>");
+                source.getSender().sendRichMessage("<gold>Je AFK time is <yellow>%afktime%</yellow></gold>");
+                source.getSender().sendRichMessage("<gold>Je staat <yellow>1ste</yellow> van het kingdom " + color + displayName + "</gold>");
+                source.getSender().sendRichMessage("");
+                source.getSender().sendRichMessage("<dark_gray><st>+----------------***----------------+</st></dark_gray>");
+            } catch (Exception e) {
+                source.getSender().sendRichMessage("<red>Er is een fout opgetreden tijdens het ophalen van je kingdom, meld dit bij staff.");
+            }
         }
+    }
+
+    @Override
+    public Collection<String> suggest(CommandSourceStack source, String[] args) {
+        return Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
     }
 
 }

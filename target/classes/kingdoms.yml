@@ -1,0 +1,19 @@
+kingdoms:
+  - name: jenava
+    color: "<gold>"
+  - name: tharios
+    color: "<dark_blue>"
+  - name: rhevia
+    color: "<gray>"
+  - name: kantatribo
+    color: "<dark_green>"
+  - name: isladelloco
+    color: "<dark_aqua>"
+  - name: freljon
+    color: "<blue>"
+  - name: cali
+    color: "<red>"
+  - name: zaqra
+    color: "<yellow>"
+  - name: eo
+    color: "<light_purple>"

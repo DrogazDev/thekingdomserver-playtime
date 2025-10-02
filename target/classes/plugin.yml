@@ -1,0 +1,4 @@
+name: thekingdomserverplaytime
+version: '1.0-SNAPSHOT'
+main: nl.drogaz.thekingdomserver_assignment.Main
+api-version: '1.21'
