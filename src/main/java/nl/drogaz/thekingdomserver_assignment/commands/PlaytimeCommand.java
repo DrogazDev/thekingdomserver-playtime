@@ -14,6 +14,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class PlaytimeCommand implements BasicCommand {
 
@@ -32,28 +34,46 @@ public class PlaytimeCommand implements BasicCommand {
                 String kingdomName = plugin.getConfigManager().getKingdom(kingdom).get("name");
                 String displayName = kingdomName.substring(0, 1).toUpperCase() + kingdomName.substring(1);
 
-                // Playtime
-                int pSessionTime = plugin.getPlaytimeListener().getPlayerPlayTime(player.getUniqueId());
                 int pSavedTime = plugin.getConfigManager().getPlayerConfig(player.getUniqueId()).getInt("playtime");
-                int pTotalTime = pSessionTime + pSavedTime;
-                String playtime = TimeFormatHelper.getTime(pTotalTime);
+                String playtime = TimeFormatHelper.getTime(pSavedTime);
 
-                // AFK Time
-                int aSessionTime = plugin.getPlaytimeListener().getPlayerAfkTime(player.getUniqueId());
-                int aSavedTime = plugin.getConfigManager().getPlayerConfig(player.getUniqueId()).getInt("afktime");
-                int aTotalTime = aSessionTime + aSavedTime;
+                int aTotalTime = plugin.getConfigManager().getPlayerConfig(player.getUniqueId()).getInt("afktime");
                 String afktime = TimeFormatHelper.getTime(aTotalTime);
+
+                int wTotalTime = plugin.getConfigManager().getPlayerConfig(player.getUniqueId()).getInt("weeklyPlaytime");
+                String weeklytime = TimeFormatHelper.getTime(wTotalTime);
 
                 player.sendRichMessage("<dark_gray><st>+----------------***----------------+</st></dark_gray>");
                 player.sendRichMessage("");
+                player.sendRichMessage("<yellow><bold>           JOUW PLAYTIME           </bold></yellow>");
                 player.sendRichMessage("<gold>Je playtime is <yellow>" + playtime + "</yellow></gold>");
                 player.sendRichMessage("<gold>Je AFK time is <yellow>" + afktime + "</yellow></gold>");
-                player.sendRichMessage("<gold>Je staat <yellow>1ste</yellow> van het kingdom " + color + displayName + "</gold>");
+                player.sendRichMessage("<gold>Je wekelijkse time is <yellow>" + weeklytime + "</yellow></gold>");
                 player.sendRichMessage("");
                 player.sendRichMessage("<dark_gray><st>+----------------***----------------+</st></dark_gray>");
             } catch (Exception e) {
                 player.sendRichMessage("<red>Er is een fout opgetreden tijdens het ophalen van je kingdom, meld dit bij staff.");
             }
+        }
+
+        if (args.length > 0 && args[0].equalsIgnoreCase("afktop")) {
+            player.sendRichMessage("<dark_gray><st>+----------------***----------------+</st></dark_gray>");
+            player.sendRichMessage("");
+
+            List<Map<String, String>> top10 = plugin.getConfigManager().getTopAfk(player);
+
+            int i = 0;
+            for (Map<String, String> entry : top10) {
+                i++;
+                player.sendRichMessage("<gold>" + i + ". <gray>" + entry.get("name") + "<gold> met een afk tijd: <yellow>" + TimeFormatHelper.getTime(Integer.parseInt(entry.get("afkTime"))));
+            }
+
+            for (int a = top10.size(); a < 10; a++) {
+                player.sendRichMessage("<gold>" + (a + 1) + ". -- Leeg --");
+            }
+
+            player.sendRichMessage("");
+            player.sendRichMessage("<dark_gray><st>+----------------***----------------+</st></dark_gray>");
         }
     }
 

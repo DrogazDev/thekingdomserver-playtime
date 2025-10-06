@@ -29,6 +29,9 @@ public final class Main extends JavaPlugin {
         playtimeListener = new PlaytimeListener();
         getServer().getPluginManager().registerEvents(playtimeListener, this);
 
+        getConfigManager().getWeeklyConfig().set("lastReset", System.currentTimeMillis());
+        getConfigManager().saveWeeklyConfig();
+
         registerCommand("playtime", new PlaytimeCommand());
         registerCommand("setkingdom", new setKingdomCommand());
 

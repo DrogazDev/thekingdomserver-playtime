@@ -4,9 +4,13 @@ import lombok.Getter;
 import lombok.Setter;
 import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.model.user.User;
+import net.luckperms.api.model.user.UserManager;
 import net.luckperms.api.node.Node;
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -22,6 +26,8 @@ public class ConfigManager {
     private final JavaPlugin plugin;
     private File kingdomsFile;
     private FileConfiguration kingdomsConfig;
+    private File weeklyFile;
+    private FileConfiguration weeklyConfig;
     private File playerdataFolder;
 
     public ConfigManager(JavaPlugin plugin) {
@@ -37,6 +43,30 @@ public class ConfigManager {
 
         playerdataFolder = new File(plugin.getDataFolder(), "playerdata");
         if (!playerdataFolder.exists()) playerdataFolder.mkdirs();
+
+        weeklyFile = new File(plugin.getDataFolder(), "weekly.yml");
+        if (!weeklyFile.exists()) {
+            try {
+                weeklyFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        weeklyConfig = YamlConfiguration.loadConfiguration(weeklyFile);
+
+        // Zet standaard waarde als die nog niet bestaat
+        if (!weeklyConfig.contains("lastReset")) {
+            weeklyConfig.set("lastReset", System.currentTimeMillis());
+            saveWeeklyConfig();
+        }
+    }
+
+    public void saveWeeklyConfig() {
+        try {
+            weeklyConfig.save(weeklyFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void saveKingdoms() {
@@ -77,17 +107,91 @@ public class ConfigManager {
     }
 
     public String getPlayerKingdom(UUID uuid) {
-        User user = LuckPermsProvider.get().getUserManager().getUser(uuid);
-        if (user != null) {
-            for (Node node : user.getNodes()) {
-                String perm = node.getKey();
-                if (perm.startsWith("kingdom.")) {
-                    String kingdom = perm.replace("kingdom.", "");
-                    return kingdom;
+        UserManager userManager = LuckPermsProvider.get().getUserManager();
+
+        try {
+            User user = userManager.loadUser(uuid).join();
+            if (user != null) {
+                for (Node node : user.getNodes()) {
+                    String perm = node.getKey();
+                    if (perm.startsWith("kingdom.")) {
+                        return perm.replace("kingdom.", "");
+                    }
                 }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+
         return null;
+    }
+
+    public List<Map<String, String>> getTopAfkPerKingdom(Player player) { // Word atm niet gebruikt
+        String kingdom = getPlayerKingdom(player.getUniqueId());
+        if (kingdom == null) return new ArrayList<>();
+
+        File[] files = playerdataFolder.listFiles((dir, name) -> name.endsWith(".yml"));
+        if (files == null) return new ArrayList<>();
+
+        List<Map<String, String>> result = new ArrayList<>();
+
+        for (File file : files) {
+            String fileName = file.getName().replace(".yml", "");
+            FileConfiguration config = YamlConfiguration.loadConfiguration(file);
+            OfflinePlayer offlinePlayer = plugin.getServer().getOfflinePlayer(UUID.fromString(fileName));
+
+            String playerKingdom = getPlayerKingdom(offlinePlayer.getUniqueId());
+            if (playerKingdom == null || !playerKingdom.equalsIgnoreCase(kingdom)) continue;
+
+            int afkTime = config.getInt("afktime");
+
+            result.add(Map.of(
+                    "uuid", offlinePlayer.getUniqueId().toString(),
+                    "name", offlinePlayer.getName() != null ? offlinePlayer.getName() : "Unknown",
+                    "afkTime", String.valueOf(afkTime)
+            ));
+        }
+
+        result.sort((a, b) -> Long.compare(
+                Long.parseLong(b.get("afkTime")),
+                Long.parseLong(a.get("afkTime"))
+        ));
+
+        if (result.size() > 10) {
+            return result.subList(0, 10);
+        }
+        return result;
+    }
+
+    public List<Map<String, String>> getTopAfk(Player player) {
+        File[] files = playerdataFolder.listFiles((dir, name) -> name.endsWith(".yml"));
+        if (files == null) return new ArrayList<>();
+
+        List<Map<String, String>> result = new ArrayList<>();
+
+        for (File file : files) {
+            String fileName = file.getName().replace(".yml", "");
+            FileConfiguration config = YamlConfiguration.loadConfiguration(file);
+            OfflinePlayer offlinePlayer = plugin.getServer().getOfflinePlayer(UUID.fromString(fileName));
+
+            int afkTime = config.getInt("afktime");
+
+            result.add(Map.of(
+                    "uuid", offlinePlayer.getUniqueId().toString(),
+                    "name", offlinePlayer.getName() != null ? offlinePlayer.getName() : "Unknown",
+                    "afkTime", String.valueOf(afkTime)
+            ));
+        }
+
+        result.sort((a, b) -> Long.compare(
+                Long.parseLong(b.get("afkTime")),
+                Long.parseLong(a.get("afkTime"))
+        ));
+
+        if (result.size() > 10) {
+            return result.subList(0, 10);
+        }
+        return result;
     }
 
     public List<Map<String, String>> getAllKingdoms() {

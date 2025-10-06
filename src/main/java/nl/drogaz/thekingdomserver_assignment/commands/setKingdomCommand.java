@@ -31,6 +31,7 @@ public class setKingdomCommand implements BasicCommand {
         }
 
         if (args.length == 2) {
+//            Denkbeeldig perms check
             String targetPlayer = args[0];
             String targetKingdom = args[1];
 

@@ -2,6 +2,7 @@ package nl.drogaz.thekingdomserver_assignment.listeners;
 
 import lombok.Getter;
 import nl.drogaz.thekingdomserver_assignment.Main;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -9,6 +10,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.*;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.time.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -22,6 +24,7 @@ public class PlaytimeListener implements Listener {
     private final int BACK_DELAY = 10;
 
     public PlaytimeListener() {
+        // Update per seconde
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -35,6 +38,7 @@ public class PlaytimeListener implements Listener {
                             data.isAfk = true;
                         } else {
                             data.playtime++;
+                            data.weeklyPlaytime++;
                         }
                     } else {
                         data.afktime++;
@@ -46,6 +50,31 @@ public class PlaytimeListener implements Listener {
                 }
             }
         }.runTaskTimer(plugin, 20, 20);
+
+        // Reset weekly elke zondag om 00:00
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                LocalDateTime now = LocalDateTime.now();
+                if (now.getDayOfWeek() == DayOfWeek.SUNDAY && now.getHour() == 0 && now.getMinute() == 0) {
+                    resetWeeklyPlaytime();
+                }
+            }
+        }.runTaskTimer(plugin, 1200, 1200); // elke minuut checken
+    }
+
+    private void resetWeeklyPlaytime() {
+        Bukkit.getLogger().info("[TheKingdom] Weekly playtime reset!");
+        for (UUID uuid : players.keySet()) {
+            PlayerData data = players.get(uuid);
+            if (data != null) {
+                data.weeklyPlaytime = 0;
+            }
+            FileConfiguration config = plugin.getConfigManager().getPlayerConfig(uuid);
+            config.set("weeklyPlaytime", 0);
+            config.set("lastWeeklyReset", System.currentTimeMillis());
+            plugin.getConfigManager().savePlayerConfig(uuid, config);
+        }
     }
 
     private void markActive(Player player) {
@@ -84,36 +113,29 @@ public class PlaytimeListener implements Listener {
         players.remove(id);
     }
 
-
     private PlayerData loadPlayerData(UUID uuid) {
         FileConfiguration configuration = plugin.getConfigManager().getPlayerConfig(uuid);
         PlayerData data = new PlayerData();
         data.playtime = configuration.getInt("playtime", 0);
         data.afktime = configuration.getInt("afktime", 0);
+        data.weeklyPlaytime = configuration.getInt("weeklyPlaytime", 0);
         return data;
-    }
-
-    public final int getPlayerPlayTime(UUID uuid) {
-        return players.get(uuid).playtime;
-    }
-
-    public final int getPlayerAfkTime(UUID uuid) {
-        return players.get(uuid).afktime;
     }
 
     private void savePlayerData(UUID uuid, PlayerData data) {
         FileConfiguration configuration = plugin.getConfigManager().getPlayerConfig(uuid);
         configuration.set("playtime", data.playtime);
         configuration.set("afktime", data.afktime);
+        configuration.set("weeklyPlaytime", data.weeklyPlaytime);
         plugin.getConfigManager().savePlayerConfig(uuid, configuration);
     }
 
     private static class PlayerData {
         int playtime = 0;
         int afktime = 0;
+        int weeklyPlaytime = 0;
         long lastActivity = System.currentTimeMillis() / 1000;
         boolean isAfk = false;
         long backSince = 0;
     }
-
 }
